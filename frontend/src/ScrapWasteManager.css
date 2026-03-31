@@ -1,0 +1,53 @@
+#container
+{
+    height: auto;
+}
+
+#header
+{
+    display: block;
+    margin: 0vh;
+    padding-top: 2vh;
+    height: 10vh;
+    background-color: rgb(43, 43, 43);
+    text-align: center;
+    color: whitesmoke;
+    font-size: 7vh;
+    font-family: Helvetica;
+}
+
+#form
+{
+    background-color: whitesmoke;
+    padding-top: 4vh;
+    height: 10vh;
+    display: block;
+    text-align: center;
+}
+
+#input
+{
+    height: 5vh;
+    width: 500px
+}
+
+#button
+{
+    height: 6vh;
+    width: 100px;
+}
+
+#display
+{
+    width: auto;
+    padding: 2%;
+    text-align: center;
+}
+
+#info
+{
+    display: float;
+    width: 18%;
+    text-align: left;
+    margin: auto;
+}
