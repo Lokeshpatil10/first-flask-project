@@ -1,33 +1,59 @@
 from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+import mysql.connector
+from mysql.connector import Error
 
 app = Flask(__name__)
+# Enable CORS so the React frontend can make requests to this API
 CORS(app)
 
-# MySQL Connection (Matches the user we created in Step 2)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://admin:password123@localhost/waste_management'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+def get_db_connection():
+    """Helper function to establish a database connection."""
+    try:
+        connection = mysql.connector.connect(
+            host='localhost',
+            database='local_services_db',
+            user='root',       # Use your MySQL username
+            password='groot'        # Use your MySQL password
+        )
+        return connection
+    except Error as e:
+        print(f"Error while connecting to MySQL: {e}")
+        return None
 
-class Manager(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
-    phone = db.Column(db.String(20))
-    pincode = db.Column(db.String(10))
+@app.route('/search', methods=['GET'])
+def search_providers():
+    """
+    Endpoint to search for service providers.
+    Query params expected: 'pincode' and 'category'
+    """
+    pincode = request.args.get('pincode')
+    category = request.args.get('category')
 
-# Create table and add dummy data
-with app.app_context():
-    db.create_all()
-    if not Manager.query.first():
-        db.session.add(Manager(name="Patil", phone="9876543210", pincode="411001"))
-        db.session.commit()
+    if not pincode or not category:
+        return jsonify({"error": "Missing pincode or category"}), 400
 
-@app.route('/managers', methods=['POST'])
-def get_managers():
-    pincode = request.json.get('pincode')
-    results = Manager.query.filter_by(pincode=pincode).all()
-    return jsonify([{"name": m.name, "phone": m.phone} for m in results])
+    connection = get_db_connection()
+    if connection is None:
+        return jsonify({"error": "Database connection failed"}), 500
+
+    try:
+        cursor = connection.cursor(dictionary=True)
+        # Parameterized query to prevent SQL injection
+        query = "SELECT * FROM service_providers WHERE pincode = %s AND category = %s"
+        cursor.execute(query, (pincode, category))
+        
+        # Fetch all matching rows
+        results = cursor.fetchall()
+        return jsonify(results), 200
+
+    except Error as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
 if __name__ == '__main__':
-    app.run(port=8000, debug=True)
+    # Run the Flask app on port 5000
+    app.run(debug=True, port=5000)
